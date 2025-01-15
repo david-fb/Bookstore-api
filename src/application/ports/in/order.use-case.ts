@@ -1,5 +1,6 @@
 import { Order } from 'src/domain/entities/order.entity';
 import { OrderStatus } from 'src/domain/enums/order-status.enum';
+import { PaymentInfo } from 'src/shared/types/payment.type';
 
 export interface CreateOrderCommand {
   items: Array<{
@@ -14,8 +15,7 @@ export interface CreateOrderCommand {
     email: string;
     name: string;
   };
-  //   paymentInfo: PaymentInfo;
-  paymentInfo: any;
+  paymentInfo: PaymentInfo;
 }
 
 export interface UpdateOrderStatusCommand {

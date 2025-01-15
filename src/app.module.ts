@@ -4,6 +4,7 @@ import { ProductModule } from './infrastructure/modules/product.module';
 import { PrismaModule } from './infrastructure/adapters/persistence/prisma/prisma.module';
 import { ApiKeyGuard } from './shared/guards/authorization.guard';
 import { OrderModule } from './infrastructure/modules/order.module';
+import { TransactionModule } from './infrastructure/modules/transaction.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { OrderModule } from './infrastructure/modules/order.module';
     PrismaModule,
     ProductModule,
     OrderModule,
+    TransactionModule,
   ],
   providers: [ApiKeyGuard],
 })

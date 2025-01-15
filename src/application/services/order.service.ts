@@ -15,6 +15,9 @@ import { Order, OrderItem } from '../../domain/entities/order.entity';
 import { OrderStatus } from '@prisma/client';
 import { OrderStatus as OrderStatusTS } from 'src/domain/enums/order-status.enum';
 import { Prisma } from '@prisma/client';
+import { TransactionService } from './transaction.service';
+import { TransactionStatus } from 'src/domain/entities/transaction.entity';
+import { PaymentGatewayPort } from 'src/shared/types/payment.type';
 
 @Injectable()
 export class OrderService implements OrderUseCase {
@@ -23,6 +26,9 @@ export class OrderService implements OrderUseCase {
     private readonly orderRepository: OrderRepositoryPort,
     @Inject('ProductRepository')
     private readonly productRepository: ProductRepositoryPort,
+    private readonly transactionService: TransactionService,
+    @Inject('PaymentGateway')
+    private readonly paymentGateway: PaymentGatewayPort,
   ) {}
 
   async createOrder(command: CreateOrderCommand): Promise<Order> {
@@ -52,10 +58,17 @@ export class OrderService implements OrderUseCase {
       totalAmount += Number(product.price) * item.quantity;
     }
 
-    // Process payment
-    // Need to call gateway service to process payment
+    // Validate credit card and get tokenized card
+    let tokenizedCard;
+    try {
+      tokenizedCard = await this.paymentGateway.getTokenizedCard(
+        command.paymentInfo.card,
+      );
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
 
-    const order = new Order();
+    let order = new Order();
     order.items = orderItems;
     order.totalAmount = new Prisma.Decimal(totalAmount);
     order.status = OrderStatusTS.PENDING;
@@ -67,16 +80,48 @@ export class OrderService implements OrderUseCase {
     order.contactNumber = command.deliveryInfo.contactNumber;
     order.payment_gateway_id = '123456'; // Payment gateway ID
 
-    const savedOrder = await this.orderRepository.create(order, orderItems);
+    order = await this.orderRepository.create(order, orderItems);
 
-    // Update product stock
-    for (const item of command.items) {
-      await this.productRepository.update(item.productId, {
-        stock: { decrement: item.quantity },
+    try {
+      // Process payment
+      const transaction = await this.transactionService.processPayment({
+        order: order,
+        amount: totalAmount,
+        paymentInfo: command.paymentInfo,
+        tokenizedCard: tokenizedCard,
       });
-    }
 
-    return savedOrder;
+      // Update order status based on transaction result
+      if (
+        transaction.status === TransactionStatus.APPROVED ||
+        transaction.status === TransactionStatus.PENDING
+      ) {
+        order = await this.orderRepository.update(order.id, {
+          status: this.getOrderStatusFromTransactionStatus(transaction.status),
+        });
+
+        // Update product stock
+        for (const item of command.items) {
+          await this.productRepository.update(item.productId, {
+            stock: { decrement: item.quantity },
+          });
+        }
+      } else {
+        order = await this.orderRepository.update(order.id, {
+          status: this.getOrderStatusFromTransactionStatus(transaction.status),
+        });
+      }
+
+      return order;
+    } catch (error) {
+      console.error(error);
+      await this.orderRepository.update(order.id, {
+        status: OrderStatus.CANCELLED,
+      });
+      throw new BadRequestException(
+        error.message || 'Payment processing failed',
+      );
+    }
   }
 
   async getOrder(id: string): Promise<Order> {
@@ -121,6 +166,21 @@ export class OrderService implements OrderUseCase {
       throw new BadRequestException(
         `Invalid status transition from ${currentStatus} to ${newStatus}`,
       );
+    }
+  }
+
+  getOrderStatusFromTransactionStatus(transactionStatus: any): OrderStatusTS {
+    switch (transactionStatus) {
+      case TransactionStatus.PENDING:
+        return OrderStatusTS.PENDING;
+      case TransactionStatus.APPROVED:
+        return OrderStatusTS.PAID;
+      case TransactionStatus.DECLINED:
+        return OrderStatusTS.CANCELLED;
+      case TransactionStatus.VOIDED:
+        return OrderStatusTS.CANCELLED;
+      default:
+        return OrderStatusTS.CANCELLED;
     }
   }
 }
