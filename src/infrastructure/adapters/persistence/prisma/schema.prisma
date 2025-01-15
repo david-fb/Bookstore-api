@@ -15,6 +15,14 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum TransactionStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  VOIDED
+  ERROR
+}
+
 model Products {
   id          String    @id @default(uuid())
   title       String 
@@ -42,6 +50,7 @@ model Orders {
   payment_gateway_id String
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  transaction   Transaction?
 }
 
 model OrderItems {
@@ -52,4 +61,19 @@ model OrderItems {
   price     Decimal
   order     Orders    @relation(fields: [orderId], references: [id])
   product   Products  @relation(fields: [productId], references: [id])
+}
+
+model Transaction {
+  id                  String   @id @default(uuid())
+  orderId             String   @unique
+  amount              Decimal
+  gatewayTransactionId String?
+  status              TransactionStatus @default(PENDING)
+  paymentMethod       String
+  lastFourDigits      String?
+  gatewayResponse     Json?
+  errorMessage        String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  order               Orders    @relation(fields: [orderId], references: [id])
 }

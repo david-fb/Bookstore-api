@@ -46,6 +46,43 @@ export class DeliveryInfoDto {
   email: string;
 }
 
+export class CardDto {
+  @ApiProperty()
+  @IsString()
+  cardNumber: string;
+
+  @ApiProperty()
+  @IsString()
+  expiryMonth: string;
+
+  @ApiProperty()
+  @IsString()
+  expiryYear: string;
+
+  @ApiProperty()
+  @IsString()
+  cvv: string;
+
+  @ApiProperty()
+  @IsString()
+  cardHolder: string;
+}
+
+export class PaymentInfoDto {
+  @ApiProperty({ type: CardDto })
+  @ValidateNested()
+  @Type(() => CardDto)
+  card: CardDto;
+
+  @ApiProperty()
+  @IsString()
+  customerEmail: string;
+
+  @ApiProperty()
+  @IsNumber()
+  installments: number;
+}
+
 export class CreateOrderDto {
   @ApiProperty({ type: [OrderItemDto] })
   @IsArray()
@@ -58,13 +95,10 @@ export class CreateOrderDto {
   @Type(() => DeliveryInfoDto)
   deliveryInfo: DeliveryInfoDto;
 
-  // @ApiProperty({ type: PaymentInfoDto })
-  // @ValidateNested()
-  // @Type(() => PaymentInfoDto)
-  // paymentInfo: PaymentInfoDto;
-
-  @ApiProperty()
-  paymentInfo: any;
+  @ApiProperty({ type: PaymentInfoDto })
+  @ValidateNested()
+  @Type(() => PaymentInfoDto)
+  paymentInfo: PaymentInfoDto;
 }
 
 export class UpdateOrderStatusDto {
