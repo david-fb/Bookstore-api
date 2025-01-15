@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
-import { Product } from '../../../domain/entities/product.entity';
-import { ProductRepositoryPort } from '../../../application/ports/out/product.repository.port';
+import { Product } from 'src/domain/entities/product.entity';
+import { ProductRepositoryPort } from 'src/application/ports/out/product.repository.port';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProductRepositoryAdapter implements ProductRepositoryPort {
@@ -22,7 +23,10 @@ export class ProductRepositoryAdapter implements ProductRepositoryPort {
     });
   }
 
-  async update(id: string, product: Partial<Product>): Promise<Product> {
+  async update(
+    id: string,
+    product: Prisma.ProductsUpdateInput,
+  ): Promise<Product> {
     return this.prisma.products.update({
       where: { id },
       data: product,

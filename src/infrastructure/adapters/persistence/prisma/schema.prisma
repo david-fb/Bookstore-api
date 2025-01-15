@@ -7,6 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
 model Products {
   id          String    @id @default(uuid())
   title       String 
@@ -23,7 +31,7 @@ model Products {
 model Orders {
   id            String      @id @default(uuid())
   totalAmount   Decimal
-  status        String      @default("PENDING")
+  status        OrderStatus @default(PENDING)
   address       String
   city          String
   department    String
@@ -31,7 +39,7 @@ model Orders {
   name          String
   email         String
   items         OrderItems[]
-  transaction   Transactions?
+  payment_gateway_id String
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
@@ -44,14 +52,4 @@ model OrderItems {
   price     Decimal
   order     Orders    @relation(fields: [orderId], references: [id])
   product   Products  @relation(fields: [productId], references: [id])
-}
-
-model Transactions {
-  id        String   @id @default(uuid())
-  orderId   String   @unique
-  amount    Decimal
-  status    String   @default("PENDING")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  order     Orders   @relation(fields: [orderId], references: [id])
 }
