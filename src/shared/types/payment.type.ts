@@ -47,6 +47,7 @@ export interface PaymentGatewayPort {
     tokenizedCard: TokenizedCard,
   ): Promise<PaymentResult>;
   getTokenizedCard(card: Card): Promise<TokenizedCard>;
+  getTransaction(transactionId: string): Promise<TransactionResponse>;
 }
 
 export interface RequestTokenizedCard {
@@ -60,4 +61,52 @@ export interface RequestTokenizedCard {
 export interface AcceptanceTokens {
   end_user_policy: string;
   personal_data_auth: string;
+}
+
+export interface TransactionResponse {
+  id: string;
+  created_at: string;
+  finalized_at: string;
+  amount_in_cents: number;
+  reference: string;
+  currency: string;
+  payment_method_type: string;
+  payment_method: {
+    type: string;
+    extra: {
+      name: string;
+      brand: string;
+      card_type: string;
+      last_four: string;
+      is_three_ds: boolean;
+      three_ds_auth: {
+        three_ds_auth: {
+          current_step: string;
+          current_step_status: string;
+        };
+      };
+      three_ds_auth_type: string;
+      external_identifier: string;
+      processor_response_code: string;
+    };
+    installments: number;
+  };
+  payment_link_id: string;
+  redirect_url: string;
+  status: string;
+  status_message: string;
+  merchant: {
+    id: number;
+    name: string;
+    legal_name: string;
+    contact_name: string;
+    phone_number: string;
+    logo_url: string;
+    legal_id_type: string;
+    email: string;
+    legal_id: string;
+    public_key: string;
+  };
+  taxes: [];
+  tip_in_cents: number;
 }
