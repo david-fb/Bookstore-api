@@ -13,8 +13,10 @@ import {
   PaymentResult,
   RequestTokenizedCard,
   AcceptanceTokens,
+  TransactionResponse,
 } from 'src/shared/types/payment.type';
 import { Order } from 'src/domain/entities/order.entity';
+import { log } from 'console';
 
 @Injectable()
 export class WompiPaymentAdapter implements PaymentGatewayPort {
@@ -187,6 +189,21 @@ export class WompiPaymentAdapter implements PaymentGatewayPort {
           legal_id_type: 'CC',
         },
       },
+      {
+        headers: {
+          Authorization: `Bearer ${this.publicKey}`,
+        },
+      },
+    );
+
+    return response.data.data;
+  }
+
+  async getTransaction(transactionId: string): Promise<TransactionResponse> {
+    console.log('transactionId', transactionId);
+    console.log(`${this.apiUrl}/transactions/${transactionId}`);
+    const response = await axios.get(
+      `${this.apiUrl}/transactions/${transactionId}`,
       {
         headers: {
           Authorization: `Bearer ${this.publicKey}`,

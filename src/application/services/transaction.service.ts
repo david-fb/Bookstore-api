@@ -74,6 +74,38 @@ export class TransactionService implements TransactionUseCase {
     return await this.transactionRepository.update(transactionId, { status });
   }
 
+  async checkTransactionStatus(orderId: string): Promise<Transaction> {
+    const transaction = await this.transactionRepository.findByOrderId(orderId);
+
+    console.log('entra', transaction.status);
+    if (transaction.status === TransactionStatus.PENDING) {
+      const transactionApiInfo = await this.paymentGateway.getTransaction(
+        transaction.gatewayTransactionId,
+      );
+
+      if (!transactionApiInfo) {
+        return transaction;
+      }
+
+      if (transactionApiInfo.status === 'PENDING') {
+        return transaction;
+      }
+
+      const updateData: Partial<Transaction> = {
+        gatewayResponse: transactionApiInfo,
+        status: this.getStatusFromPaymentResult(transactionApiInfo),
+        errorMessage: transactionApiInfo.status_message,
+      };
+
+      return await this.transactionRepository.update(
+        transaction.id,
+        updateData,
+      );
+    }
+
+    return transaction;
+  }
+
   getStatusFromPaymentResult(paymentResult: any): TransactionStatus {
     switch (paymentResult.status) {
       case 'PENDING':

@@ -30,7 +30,7 @@ export class TransactionRepositoryAdapter implements TransactionRepositoryPort {
   }
 
   async findByOrderId(orderId: string): Promise<Transaction> {
-    return this.prisma.transaction.findFirst({
+    return this.prisma.transaction.findUnique({
       where: { orderId },
     });
   }

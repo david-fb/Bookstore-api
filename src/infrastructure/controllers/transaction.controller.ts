@@ -13,4 +13,11 @@ export class TransactionController {
   async getTransactionByOrderId(@Param('orderId') orderId: string) {
     return await this.transactionService.getTransactionByOrderId(orderId);
   }
+
+  @Get('order/:orderId/status')
+  @ApiOperation({ summary: 'Check transaction status and updated if needed' })
+  @ApiResponse({ status: 200, description: 'Return the order.' })
+  async checkTransactionStatus(@Param('orderId') orderId: string) {
+    return await this.transactionService.checkTransactionStatus(orderId);
+  }
 }

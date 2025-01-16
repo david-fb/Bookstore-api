@@ -150,6 +150,36 @@ export class OrderService implements OrderUseCase {
     });
   }
 
+  async checkOrderStatus(id: string): Promise<Order> {
+    const order = await this.orderRepository.findById(id);
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+
+    const transaction = await this.transactionService.getTransactionByOrderId(
+      order.id,
+    );
+
+    if (!transaction) {
+      throw new NotFoundException(`Transaction for order ${id} not found`);
+    }
+
+    if (transaction.status === TransactionStatus.PENDING) {
+      const updatedTransaction =
+        await this.transactionService.checkTransactionStatus(transaction.id);
+
+      if (updatedTransaction.status === TransactionStatus.PENDING) {
+        return order;
+      }
+
+      return await this.orderRepository.update(order.id, {
+        status: this.getOrderStatusFromTransactionStatus(
+          updatedTransaction.status,
+        ),
+      });
+    }
+  }
+
   private validateStatusTransition(
     currentStatus: OrderStatus,
     newStatus: OrderStatus,
