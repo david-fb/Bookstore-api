@@ -9,7 +9,7 @@ async function bootstrap() {
   });
 
   // Global pipes
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
   // Swagger setup
   const config = new DocumentBuilder()
@@ -18,10 +18,18 @@ async function bootstrap() {
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
 
-  app.enableCors();
+  app.enableCors({
+    origin: process.env.CORS_ORIGIN ?? '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+  const API_PREFIX = process.env.API_PREFIX ?? '/api/v1';
 
+  app.setGlobalPrefix(API_PREFIX);
+  SwaggerModule.setup(API_PREFIX + '/docs', app, document);
   await app.listen(process.env.PORT ?? 8000);
 }
 bootstrap();
