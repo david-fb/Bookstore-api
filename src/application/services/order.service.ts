@@ -18,6 +18,9 @@ import { Prisma } from '@prisma/client';
 import { TransactionService } from './transaction.service';
 import { TransactionStatus } from 'src/domain/entities/transaction.entity';
 import { PaymentGatewayPort } from 'src/shared/types/payment.type';
+import { CustomerRepositoryPort } from '../ports/out/customer.respository.port';
+import { DeliveryRepositoryPort } from '../ports/out/delivery.repository.port';
+import { Delivery } from 'src/domain/entities/delivery.entity';
 
 @Injectable()
 export class OrderService implements OrderUseCase {
@@ -29,6 +32,10 @@ export class OrderService implements OrderUseCase {
     private readonly transactionService: TransactionService,
     @Inject('PaymentGateway')
     private readonly paymentGateway: PaymentGatewayPort,
+    @Inject('CustomerRepository')
+    private readonly customerRepository: CustomerRepositoryPort,
+    @Inject('DeliveryRepository')
+    private readonly deliveryRepository: DeliveryRepositoryPort,
   ) {}
 
   async createOrder(command: CreateOrderCommand): Promise<Order> {
@@ -68,17 +75,28 @@ export class OrderService implements OrderUseCase {
       throw new BadRequestException(error.message);
     }
 
+    const customer = await this.customerRepository.findCustomerByEmail(
+      command.deliveryInfo.email,
+    );
+
+    if (!customer) {
+      await this.customerRepository.createCustomer({
+        email: command.deliveryInfo.email,
+        name: command.deliveryInfo.name,
+        address: command.deliveryInfo.address,
+        city: command.deliveryInfo.city,
+        department: command.deliveryInfo.department,
+        contactNumber: command.deliveryInfo.contactNumber,
+      });
+    }
+
     let order = new Order();
     order.items = orderItems;
     order.totalAmount = new Prisma.Decimal(totalAmount);
+    order.baseAmount = new Prisma.Decimal(totalAmount);
+    order.deliveryFee = new Prisma.Decimal(0);
     order.status = OrderStatusTS.PENDING;
-    order.address = command.deliveryInfo.address;
-    order.city = command.deliveryInfo.city;
-    order.department = command.deliveryInfo.department;
-    order.email = command.deliveryInfo.email;
-    order.name = command.deliveryInfo.name;
-    order.contactNumber = command.deliveryInfo.contactNumber;
-    order.payment_gateway_id = '123456'; // Payment gateway ID
+    order.customerId = customer.id;
 
     order = await this.orderRepository.create(order, orderItems);
 
@@ -99,6 +117,16 @@ export class OrderService implements OrderUseCase {
         order = await this.orderRepository.update(order.id, {
           status: this.getOrderStatusFromTransactionStatus(transaction.status),
         });
+
+        const delivery = new Delivery();
+        delivery.orderId = order.id;
+        delivery.recipientName = command.deliveryInfo.name;
+        delivery.address = command.deliveryInfo.address;
+        delivery.city = command.deliveryInfo.city;
+        delivery.department = command.deliveryInfo.department;
+        delivery.contactNumber = command.deliveryInfo.contactNumber;
+
+        await this.deliveryRepository.createDelivery(delivery);
 
         // Update product stock
         for (const item of command.items) {
@@ -163,10 +191,11 @@ export class OrderService implements OrderUseCase {
     if (!transaction) {
       throw new NotFoundException(`Transaction for order ${id} not found`);
     }
-
     if (transaction.status === TransactionStatus.PENDING) {
       const updatedTransaction =
-        await this.transactionService.checkTransactionStatus(transaction.id);
+        await this.transactionService.checkTransactionStatus(
+          transaction.orderId,
+        );
 
       if (updatedTransaction.status === TransactionStatus.PENDING) {
         return order;
@@ -178,6 +207,8 @@ export class OrderService implements OrderUseCase {
         ),
       });
     }
+
+    return order;
   }
 
   private validateStatusTransition(

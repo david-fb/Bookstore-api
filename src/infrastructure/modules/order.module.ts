@@ -6,6 +6,8 @@ import { PrismaModule } from '../adapters/persistence/prisma/prisma.module';
 import { ProductRepositoryAdapter } from '../adapters/persistence/product.repository.adapter';
 import { TransactionModule } from './transaction.module';
 import { WompiPaymentAdapter } from '../adapters/payment/wompi.payment.adapter';
+import { CustomerRepositoryAdapter } from '../adapters/persistence/customer.repository.adapter';
+import { DeliveryRepositoryAdapter } from '../adapters/persistence/delivery.repository.adapter';
 
 @Module({
   imports: [PrismaModule, TransactionModule],
@@ -23,6 +25,14 @@ import { WompiPaymentAdapter } from '../adapters/payment/wompi.payment.adapter';
     {
       provide: 'PaymentGateway',
       useClass: WompiPaymentAdapter,
+    },
+    {
+      provide: 'CustomerRepository',
+      useClass: CustomerRepositoryAdapter,
+    },
+    {
+      provide: 'DeliveryRepository',
+      useClass: DeliveryRepositoryAdapter,
     },
   ],
   exports: [OrderService],

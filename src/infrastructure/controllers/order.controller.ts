@@ -1,15 +1,7 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Body,
-  Param,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { OrderService } from 'src/application/services/order.service';
-import { CreateOrderDto, UpdateOrderStatusDto } from './dtos/order.dto';
+import { CreateOrderDto } from './dtos/order.dto';
 import { ApiKeyGuard } from 'src/shared/guards/authorization.guard';
 
 @ApiTags('orders')
@@ -39,19 +31,16 @@ export class OrderController {
     return await this.orderService.getOrder(id);
   }
 
-  @Put(':id/status')
-  @ApiOperation({ summary: 'Update order status' })
+  @Get(':id/continue')
+  @ApiOperation({
+    summary:
+      'Check status from trasaction and change order status and create delivery ',
+  })
   @ApiResponse({
     status: 200,
     description: 'Order status updated successfully.',
   })
-  async updateOrderStatus(
-    @Param('id') id: string,
-    @Body() updateOrderStatusDto: UpdateOrderStatusDto,
-  ) {
-    return await this.orderService.updateOrderStatus({
-      orderId: id,
-      status: updateOrderStatusDto.status,
-    });
+  async updateOrderStatus(@Param('id') id: string) {
+    return await this.orderService.checkOrderStatus(id);
   }
 }

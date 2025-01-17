@@ -16,7 +16,6 @@ import {
   TransactionResponse,
 } from 'src/shared/types/payment.type';
 import { Order } from 'src/domain/entities/order.entity';
-import { log } from 'console';
 
 @Injectable()
 export class WompiPaymentAdapter implements PaymentGatewayPort {
@@ -167,7 +166,7 @@ export class WompiPaymentAdapter implements PaymentGatewayPort {
         amount_in_cents: Math.round(amount * 100),
         currency: 'COP',
         reference: order.id,
-        customer_email: order.email,
+        customer_email: order.customer.email,
         acceptance_token: acceptanceTokens.end_user_policy,
         accept_personal_data: acceptanceTokens.personal_data_auth,
         signature: signature,
@@ -175,16 +174,16 @@ export class WompiPaymentAdapter implements PaymentGatewayPort {
         payment_method_type: 'CARD',
 
         shipping_address: {
-          address_line_1: order.address,
+          address_line_1: order.customer.address,
           country: 'CO',
-          region: order.department,
-          city: order.city,
-          phone_number: order.contactNumber,
+          region: order.customer.department,
+          city: order.customer.city,
+          phone_number: order.customer.contactNumber,
         },
 
         customer_data: {
-          full_name: order.name,
-          phone_number: order.contactNumber,
+          full_name: order.customer.name,
+          phone_number: order.customer.contactNumber,
           legal_id: '123456789',
           legal_id_type: 'CC',
         },
@@ -200,8 +199,6 @@ export class WompiPaymentAdapter implements PaymentGatewayPort {
   }
 
   async getTransaction(transactionId: string): Promise<TransactionResponse> {
-    console.log('transactionId', transactionId);
-    console.log(`${this.apiUrl}/transactions/${transactionId}`);
     const response = await axios.get(
       `${this.apiUrl}/transactions/${transactionId}`,
       {

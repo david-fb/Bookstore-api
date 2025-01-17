@@ -77,7 +77,6 @@ export class TransactionService implements TransactionUseCase {
   async checkTransactionStatus(orderId: string): Promise<Transaction> {
     const transaction = await this.transactionRepository.findByOrderId(orderId);
 
-    console.log('entra', transaction.status);
     if (transaction.status === TransactionStatus.PENDING) {
       const transactionApiInfo = await this.paymentGateway.getTransaction(
         transaction.gatewayTransactionId,
