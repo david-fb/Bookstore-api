@@ -1,4 +1,4 @@
-import { Transaction } from 'src/domain/entities/transaction.entity';
+import { Transaction } from '../../../domain/entities/transaction.entity';
 
 export interface TransactionRepositoryPort {
   create(transaction: Transaction): Promise<Transaction>;
