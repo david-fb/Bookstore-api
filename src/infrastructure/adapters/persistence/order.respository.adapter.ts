@@ -13,13 +13,14 @@ export class OrderRepositoryAdapter implements OrderRepositoryPort {
     return this.prisma.orders.create({
       data: {
         totalAmount: order.totalAmount,
+        baseAmount: order.baseAmount,
+        deliveryFee: order.deliveryFee,
         status: order.status as PrismaOrderStatus,
-        address: order.address,
-        city: order.city,
-        department: order.department,
-        contactNumber: order.contactNumber,
-        name: order.name,
-        email: order.email,
+        customer: {
+          connect: {
+            id: order.customerId,
+          },
+        },
         items: {
           create: items.map((item) => ({
             productId: item.productId,
@@ -27,12 +28,18 @@ export class OrderRepositoryAdapter implements OrderRepositoryPort {
             price: item.price,
           })),
         },
-        payment_gateway_id: order.payment_gateway_id,
       },
       include: {
         items: {
           include: {
             product: true,
+          },
+        },
+        customer: true,
+        transaction: true,
+        delivery: {
+          include: {
+            order: true,
           },
         },
       },
@@ -48,6 +55,13 @@ export class OrderRepositoryAdapter implements OrderRepositoryPort {
             product: true,
           },
         },
+        customer: true,
+        transaction: true,
+        delivery: {
+          include: {
+            order: true,
+          },
+        },
       },
     });
   }
@@ -58,6 +72,13 @@ export class OrderRepositoryAdapter implements OrderRepositoryPort {
         items: {
           include: {
             product: true,
+          },
+        },
+        customer: true,
+        transaction: true,
+        delivery: {
+          include: {
+            order: true,
           },
         },
       },
@@ -72,6 +93,13 @@ export class OrderRepositoryAdapter implements OrderRepositoryPort {
         items: {
           include: {
             product: true,
+          },
+        },
+        customer: true,
+        transaction: true,
+        delivery: {
+          include: {
+            order: true,
           },
         },
       },

@@ -2,6 +2,9 @@ import { OrderStatus } from 'src/domain/enums/order-status.enum';
 import { Product } from './product.entity';
 import { Prisma } from '@prisma/client';
 import { OrderStatus as PrismaOrderStatus } from '@prisma/client';
+import { Customer } from './customer.entity';
+import { Delivery } from './delivery.entity';
+import { Transaction } from './transaction.entity';
 
 export class OrderItem {
   id: string;
@@ -12,18 +15,26 @@ export class OrderItem {
   product?: Product;
 }
 
-export class Order {
+export class OrderBase {
   id: string;
   totalAmount: Prisma.Decimal;
+  baseAmount: Prisma.Decimal;
+  deliveryFee: Prisma.Decimal;
   status: OrderStatus | PrismaOrderStatus;
-  address: string;
-  city: string;
-  department: string;
-  contactNumber: string;
-  name: string;
-  email: string;
-  items: OrderItem[];
-  payment_gateway_id?: string;
+  customerId: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export class Order extends OrderBase {
+  items: OrderItem[];
+  transaction: Transaction;
+  delivery?: Delivery;
+  customer: Customer;
+}
+
+export class CustomerOrder extends OrderBase {
+  items: OrderItem[];
+  transaction: Transaction;
+  delivery: Delivery;
 }
