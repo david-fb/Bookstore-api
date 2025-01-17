@@ -123,6 +123,21 @@ WOMPI_INTEGRITY_KEY=
 WOMPI_EVENTS_KEY=
 ```
 
+## 📖 API Documentation - Swagger
+
+This project includes an interactive API documentation built with **Swagger**. You can explore all the available endpoints, test requests, and view responses directly from the browser.
+
+### Access the Swagger Documentation:
+[![Swagger UI](https://img.shields.io/badge/Swagger-UI-green)](http://localhost:3000/api)
+
+- **URL**: [http://localhost:8000/api/v1/docs](http://localhost:8000/api/v1/docs)
+- The Swagger interface provides:
+  - 📄 Endpoint descriptions
+  - 📊 Request/Response schemas
+
+> Replace `http://localhost:8000/api/v1/docs` with your live or development API URL.
+
+
 ## 🧪 Test
 ```bash
 # Running tests
