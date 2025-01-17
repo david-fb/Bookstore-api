@@ -17,5 +17,5 @@ export class Delivery {
   notes: string;
   createdAt: Date;
   updatedAt: Date;
-  order: Partial<Order>;
+  order?: Partial<Order>;
 }

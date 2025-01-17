@@ -13,14 +13,14 @@ import { OrderRepositoryPort } from '../ports/out/order.repository.port';
 import { ProductRepositoryPort } from '../ports/out/product.repository.port';
 import { Order, OrderItem } from '../../domain/entities/order.entity';
 import { OrderStatus } from '@prisma/client';
-import { OrderStatus as OrderStatusTS } from 'src/domain/enums/order-status.enum';
+import { OrderStatus as OrderStatusTS } from '../../domain/enums/order-status.enum';
 import { Prisma } from '@prisma/client';
 import { TransactionService } from './transaction.service';
-import { TransactionStatus } from 'src/domain/entities/transaction.entity';
-import { PaymentGatewayPort } from 'src/shared/types/payment.type';
+import { TransactionStatus } from '../../domain/entities/transaction.entity';
+import { PaymentGatewayPort } from '../../shared/types/payment.type';
 import { CustomerRepositoryPort } from '../ports/out/customer.respository.port';
 import { DeliveryRepositoryPort } from '../ports/out/delivery.repository.port';
-import { Delivery } from 'src/domain/entities/delivery.entity';
+import { Delivery } from '../../domain/entities/delivery.entity';
 
 @Injectable()
 export class OrderService implements OrderUseCase {
@@ -75,12 +75,12 @@ export class OrderService implements OrderUseCase {
       throw new BadRequestException(error.message);
     }
 
-    const customer = await this.customerRepository.findCustomerByEmail(
+    let customer = await this.customerRepository.findCustomerByEmail(
       command.deliveryInfo.email,
     );
 
     if (!customer) {
-      await this.customerRepository.createCustomer({
+      customer = await this.customerRepository.createCustomer({
         email: command.deliveryInfo.email,
         name: command.deliveryInfo.name,
         address: command.deliveryInfo.address,
