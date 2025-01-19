@@ -1,5 +1,7 @@
 # Bookstore API
-
+## 🚀 Deploy
+The switch from AWS to Digital Ocean was made due to budget constraints. Additionally, an affordable domain was purchased to enable SSL and use it with the website.
+[https://www.bookstore-api.store/api/v1](https://www.bookstore-api.store/api/v1)
 ## 📋 Description
 This repository contains the backend API for an online store, developed using NestJS and Prisma. It provides robust and scalable endpoints for managing products, orders, and payments. The API integrates with a payment gateway to ensure secure transaction processing. 
 
@@ -95,6 +97,7 @@ cp .env.example .env
 docker compose up -d
 
 # Setting Database
+npm run prisma:generate
 npm run prisma:migrate:dev
 
 # Seeding
